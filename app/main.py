@@ -1,21 +1,25 @@
-import time
+import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
+from app.api.routes import router
 from app.config import settings
-from app.models import QueryRequest, QueryResponse
+from app.errors import AppError
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 app = FastAPI(title=settings.app_name)
+app.include_router(router)
 
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "app": settings.app_name}
-
-
-@app.post("/query", response_model=QueryResponse)
-def query(request: QueryRequest) -> QueryResponse:
-    start = time.perf_counter()
-    answer = f"Not implemented yet. You asked: {request.question}"
-    elapsed_ms = int((time.perf_counter() - start) * 1000)
-    return QueryResponse(answer=answer, citations=[], latency_ms=elapsed_ms)
+@app.exception_handler(AppError)
+def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
+    logging.warning("app error: %s", exc.message)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.message, "detail": str(exc) or None},
+    )

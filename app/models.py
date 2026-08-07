@@ -15,3 +15,7 @@ class QueryResponse(BaseModel):
     answer: str
     citations: list[Citation] = []
     latency_ms: int = 0
+
+class ErrorResponse(BaseModel):
+    error: str
+    detail: str | None = None
