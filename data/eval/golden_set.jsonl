@@ -1,0 +1,10 @@
+{"id":"q001","question":"How many leave days can I carry forward?","expected_source":"leave-policy.md","answerable":true}
+{"id":"q002","question":"How do I claim dental treatment?","expected_source":null,"answerable":false}
+{"id":"q003","question":"How many days of sick leave do employees receive each year?","expected_source":"leave-policy.md","answerable":true}
+{"id":"q004","question":"How many days per week can employees work remotely?","expected_source":"wfh-policy.md","answerable":true}
+{"id":"q005","question":"Can a new employee work remotely during their first 90 days?","expected_source":"onboarding-checklist.md","answerable":true}
+{"id":"q006","question":"What is the current daily per-diem rate for business travel expenses?","expected_source":"expense-reimbursement.md","answerable":true}
+{"id":"q007","question":"What documents are required when requesting VPN access?","expected_source":"vpn-access-guide.md","answerable":true}
+{"id":"q008","question":"What should I do if I forget my company password?","expected_source":"password-mfa-guide.md","answerable":true}
+{"id":"q009","question":"How do I request a new software license?","expected_source":"software-procurement.md","answerable":true}
+{"id":"q010","question":"How do I submit a medical insurance claim?","expected_source":null,"answerable":false}
