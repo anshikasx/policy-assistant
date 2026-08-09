@@ -1,4 +1,7 @@
 import logging
+import truststore
+
+truststore.inject_into_ssl()
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

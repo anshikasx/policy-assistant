@@ -1,25 +1,69 @@
 import logging
+import re
 import time
 
+from app.config import settings
+from app.generation.llm_client import complete
+from app.generation.prompts import SYSTEM_PROMPT, build_user_prompt
+from app.ingestion.embedder import embed_query
 from app.models import Citation, QueryRequest, QueryResponse
+from app.retrieval.vector_store import get_client, search
 
 logger = logging.getLogger(__name__)
 
+TOP_K = 5
+CITATION_PATTERN = re.compile(r"\[(\d+)\]")
+
 
 class QueryService:
-    """Answers questions. Retrieval + generation arrive on day 5."""
+    def __init__(self) -> None:
+        self.client = get_client()
 
     def answer(self, request: QueryRequest) -> QueryResponse:
         start = time.perf_counter()
 
-        answer = f"Not implemented yet. You asked: {request.question}"
-        citations: list[Citation] = []
+        points = search(self.client, embed_query(request.question), top_k=TOP_K)
+        passages = [p.payload or {} for p in points]
 
+        text, usage = complete(
+            SYSTEM_PROMPT, build_user_prompt(request.question, passages)
+        )
+
+        citations = self._extract_citations(text, passages)
         elapsed_ms = int((time.perf_counter() - start) * 1000)
+
         logger.info(
-            "query handled",
-            extra={"question": request.question, "latency_ms": elapsed_ms},
+            "query handled | model=%s | q=%r | chunks=%s | cited=%s | "
+            "tokens=%s | cost=$%.6f | %dms",
+            settings.llm_model,
+            request.question,
+            [p.get("chunk_id") for p in passages],
+            [c.chunk_id for c in citations],
+            usage.get("total_tokens"),
+            usage.get("cost", 0.0),
+            elapsed_ms,
         )
+
         return QueryResponse(
-            answer=answer, citations=citations, latency_ms=elapsed_ms
+            answer=text, citations=citations, latency_ms=elapsed_ms
         )
+
+    def _extract_citations(
+        self, text: str, passages: list[dict]
+    ) -> list[Citation]:
+        seen: set[int] = set()
+        citations: list[Citation] = []
+        for match in CITATION_PATTERN.finditer(text):
+            idx = int(match.group(1))
+            if idx in seen or not (1 <= idx <= len(passages)):
+                continue
+            seen.add(idx)
+            p = passages[idx - 1]
+            citations.append(
+                Citation(
+                    chunk_id=p.get("chunk_id", ""),
+                    source_file=p.get("source_file", ""),
+                    section_title=p.get("section_title"),
+                )
+            )
+        return citations
