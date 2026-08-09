@@ -2,7 +2,7 @@ import uuid
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-
+from app.config import settings
 from app.ingestion.chunker import Chunk
 
 COLLECTION = "policies"
@@ -10,7 +10,7 @@ VECTOR_SIZE = 384
 
 
 def get_client() -> QdrantClient:
-    return QdrantClient(url="http://localhost:6333")
+    return QdrantClient(url=settings.qdrant_url)
 
 
 def recreate_collection(client: QdrantClient) -> None:

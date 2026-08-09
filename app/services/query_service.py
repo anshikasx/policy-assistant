@@ -33,15 +33,19 @@ class QueryService:
         elapsed_ms = int((time.perf_counter() - start) * 1000)
 
         logger.info(
-            "query handled | model=%s | q=%r | chunks=%s | cited=%s | "
-            "tokens=%s | cost=$%.6f | %dms",
-            settings.llm_model,
-            request.question,
-            [p.get("chunk_id") for p in passages],
-            [c.chunk_id for c in citations],
-            usage.get("total_tokens"),
-            usage.get("cost", 0.0),
-            elapsed_ms,
+            "query_handled",
+            extra={
+                "extra_fields": {
+                    "model": settings.llm_model,
+                    "question": request.question,
+                    "retrieved_chunks": [p.get("chunk_id") for p in passages],
+                    "cited_chunks": [c.chunk_id for c in citations],
+                    "total_tokens": usage.get("total_tokens"),
+                    "cost_usd": usage.get("cost", 0.0),
+                    "latency_ms": elapsed_ms,
+                    "refused": "INSUFFICIENT_CONTEXT" in text,
+                }
+            },
         )
 
         return QueryResponse(
